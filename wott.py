@@ -2,35 +2,19 @@ import argparse
 import json
 import os
 
+import requests
+
 from google.oauth2 import service_account
 from google.cloud.iot import DeviceManagerClient, types, enums
 from google.api_core.exceptions import NotFound
 
 
+WOTT_ENDPOINT = os.getenv('WOTT_ENDPOINT', 'https://api.wott.io')
 PROJECT = 'wott-244904'
 LOCATION = 'europe-west1'
 REGISTRY = 'wott_registry'
 PUBSUB = 'wott-pubsub'
-CA_CERT = "-----BEGIN CERTIFICATE-----\nMIICIjCCAcigAwIBAgIUVX6IR6IZkUV5c9uFtkCPqz/S/8IwCgYIKoZIzj0EAwIw\nWzELMAkGA1UEBhMCVUsxDzANBgNVBAcTBkxvbmRvbjEeMBwGA1UEChMVV2ViIG9m\nIFRydXN0ZWQgVGhpbmdzMRswGQYDVQQDExJyb290LWNhLndvdHQubG9jYWwwHhcN\nMTkwMTI0MTY0NjAwWhcNMjAwMTI0MTY0NjAwWjBfMQswCQYDVQQGEwJVSzEPMA0G\nA1UEBxMGTG9uZG9uMSMwIQYDVQQKExpXZWIgb2YgVHJ1c3RlZCBUaGluZ3MsIEx0\nZDEaMBgGA1UEAxMRY2EwLWNhLndvdHQubG9jYWwwWTATBgcqhkjOPQIBBggqhkjO\nPQMBBwNCAARtfUDIXmuqlXh/iUBASCMsuv/okVl5Rr411rtDVkJb9/pOXvytrLHO\npqRoaTb20vjvZJyIfIQHjYCVhqgydJ/0o2YwZDAOBgNVHQ8BAf8EBAMCAYYwEgYD\nVR0TAQH/BAgwBgEB/wIBADAdBgNVHQ4EFgQUqbbNcauIPejjNseUbyqxFACFNwEw\nHwYDVR0jBBgwFoAUFFMJ5IilG4BJpHcho67y9faWbpQwCgYIKoZIzj0EAwIDSAAw\nRQIhALsFD/KDOFfMpiL4/8VA65quwJYPQIZZSljuFbjIadnJAiAJ5rYreEJ0A8du\nlTjJd3us3c4uqtFC+9lvbyvY7Kqsbg==\n-----END CERTIFICATE-----"
-DEVICE_ID = '799d00d82544489eb01b339c618d0b62.d.wott.local'
-DEVICE_CERT = """
------BEGIN CERTIFICATE-----
-MIICljCCAj2gAwIBAgIUHeVSXevXy8NaE4oW8FhHH66Q3EMwCgYIKoZIzj0EAwIw
-XzELMAkGA1UEBhMCVUsxDzANBgNVBAcTBkxvbmRvbjEjMCEGA1UEChMaV2ViIG9m
-IFRydXN0ZWQgVGhpbmdzLCBMdGQxGjAYBgNVBAMTEWNhMC1jYS53b3R0LmxvY2Fs
-MB4XDTE5MDYyNjEwNTAwMFoXDTE5MDcwMzEwNTAwMFowezELMAkGA1UEBhMCVUsx
-DzANBgNVBAgTBkxvbmRvbjEjMCEGA1UEChMaV2ViIG9mIFRydXN0ZWQgVGhpbmdz
-LCBMdGQxNjA0BgNVBAMTLTc5OWQwMGQ4MjU0NDQ4OWViMDFiMzM5YzYxOGQwYjYy
-LmQud290dC5sb2NhbDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABHPR6u35nKxO
-+YwmBud6tykF0FHEBu2XAN7KBGl9E0Ad3QH1GL9Xn9izpAhN9uRBMVzjriOpmEBn
-IeWMThDRO3ejgbowgbcwDgYDVR0PAQH/BAQDAgeAMB0GA1UdJQQWMBQGCCsGAQUF
-BwMCBggrBgEFBQcDATAMBgNVHRMBAf8EAjAAMB0GA1UdDgQWBBS/FuaT7csgjr3m
-jUetHjWVwK7O9DAfBgNVHSMEGDAWgBSpts1xq4g96OM2x5RvKrEUAIU3ATA4BgNV
-HREEMTAvgi03OTlkMDBkODI1NDQ0ODllYjAxYjMzOWM2MThkMGI2Mi5kLndvdHQu
-bG9jYWwwCgYIKoZIzj0EAwIDRwAwRAIgJpwOZymT7nzyJvIxhazoHQm7B/TBlR2X
-A5NmBOpzKCACIAslvVt01ks2iONwHzG/2OSaDOfzlS4qeBnpgTWrXdZ9
------END CERTIFICATE-----
-"""
+
 
 def create_client():
     # iot.DeviceManagerClient doesn't do this himself, unlike other Google libs.
@@ -112,6 +96,39 @@ def create_or_update_device(client, project_name, location_name, registry_name, 
     return device
 
 
+def get_ca_cert(debug):
+    ca = requests.get(f'{WOTT_ENDPOINT}/v0.2/ca-bundle')
+
+    if debug:
+        print("[RECEIVED] Get CA Cert: {}".format(ca.status_code))
+        print("[RECEIVED] Get CA Cert: {}".format(ca.content))
+
+    if not ca.ok:
+        print('Failed to get CA...')
+        print(ca.status_code)
+        print(ca.content)
+        return
+
+    return ca.json()['ca_bundle']
+
+
+def get_device_cert(device_id, debug):
+    cert_request = requests.get(f'{WOTT_ENDPOINT}/v0.2/device-cert/{device_id}')
+
+    if debug:
+        print("[RECEIVED] Get CA Cert: {}".format(cert_request.status_code))
+        print("[RECEIVED] Get CA Cert: {}".format(cert_request.content))
+
+    if not cert_request.ok:
+        print('Failed to get CA...')
+        print(cert_request.status_code)
+        print(cert_request.content)
+        return
+
+    return cert_request.content
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -132,8 +149,20 @@ if __name__ == '__main__':
         required=False,
         default=PUBSUB,
         help="pubsub name.")
+    parser.add_argument(
+        '--device',
+        required=False,
+        default='',
+        help="device id.")
+    parser.add_argument(
+        '--debug',
+        action="store_true",
+        help="debug mode.")
     args = parser.parse_args()
 
+    ca_cert = get_ca_cert(args.debug)
     client = create_client()
-    registry = create_registry(client, args.project, args.location, args.registry, args.pubsub, CA_CERT)
-    device = create_or_update_device(client, args.project, args.location, args.registry, DEVICE_ID, DEVICE_CERT)
+    registry = create_registry(client, args.project, args.location, args.registry, args.pubsub, ca_cert)
+
+    device_cert = get_device_cert(args.device, args.debug)
+    device = create_or_update_device(client, args.project, args.location, args.registry, args.device, device_cert)
