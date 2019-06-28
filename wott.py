@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 
@@ -111,6 +112,28 @@ def create_or_update_device(client, project_name, location_name, registry_name, 
     return device
 
 
-client = create_client()
-registry = create_registry(client, PROJECT, LOCATION, REGISTRY, PUBSUB, CA_CERT)
-device = create_or_update_device(client, PROJECT, LOCATION, REGISTRY, DEVICE_ID, DEVICE_CERT)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--project',
+        required=True,
+        help="IoT Project name.")
+    parser.add_argument(
+        '--location',
+        required=True,
+        help="IoT location region.")
+    parser.add_argument(
+        '--registry',
+        required=False,
+        default=REGISTRY,
+        help="IoT Registry name.")
+    parser.add_argument(
+        '--pubsub',
+        required=False,
+        default=PUBSUB,
+        help="pubsub name.")
+    args = parser.parse_args()
+
+    client = create_client()
+    registry = create_registry(client, args.project, args.location, args.registry, args.pubsub, CA_CERT)
+    device = create_or_update_device(client, args.project, args.location, args.registry, DEVICE_ID, DEVICE_CERT)
