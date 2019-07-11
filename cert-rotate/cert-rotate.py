@@ -1,3 +1,4 @@
+import os
 import pytz
 import json
 import requests
@@ -10,16 +11,22 @@ from googleapiclient.errors import HttpError
 
 
 # Google IoT core project settings
-PROJECT_ID = "project-id"
-CLOUD_REGION = "asia-east1"  # possible values "us-central1", "europe-west1", and "asia-east1"
-REGISTRY_ID = "registry-id"
-SERVICE_ACCOUNT_JSON = 'service_account.json'
+PROJECT_ID = os.getenv('PROJECT_ID')
+CLOUD_REGION = os.getenv('CLOUD_REGION')
+REGISTRY_ID = os.getenv('REGISTRY_ID')
+SERVICE_ACCOUNT_JSON = os.getenv('GOOGLE_APPLICATION_CREDENTIALS', 'service_account.json')
 
 # remove expired certs from google IoT registry, while update devices
 REMOVE_EXPIRED_CERTS = True
 
 # wott api token
-WOTT_API_TOKEN = '0123456789abcdef0123456789abcdef01234567'
+WOTT_API_TOKEN = os.getenv('WOTT_API_TOKEN')
+
+
+def check_var(name):
+    if globals()[name] is None:
+        print('Environment variable {} must be set'.format(name))
+        exit(1)
 
 
 def _error_print(e, msg):
@@ -210,6 +217,18 @@ def print_giot_devices(giot_dev_list):
 
 
 def main():
+
+    check_var('PROJECT_ID')
+    check_var('REGISTRY_ID')
+    check_var('CLOUD_REGION')
+    check_var('WOTT_API_TOKEN')
+
+    if not os.path.isfile(SERVICE_ACCOUNT_JSON):
+        print('File {} not found.\n'
+              'Perhaps the environment variable {} is not set or is not set correctly'.format(
+                SERVICE_ACCOUNT_JSON, 'GOOGLE_APPLICATION_CREDENTIALS'
+              ))
+        exit(1)
 
     def retrieve_giot_devices():
         print('\nretrieving device list from google registry...')

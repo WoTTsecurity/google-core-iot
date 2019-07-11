@@ -27,9 +27,11 @@ source ~/.gc-rt-venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Update `PROJECT_ID`, `CLOUD_REGION`, `REGISTRY_ID`, `SERVICE_ACCOUNT_JSON` and `token` values according to your project and security settings. 
+Set the `PROJECT_ID`, `CLOUD_REGION`, `REGISTRY_ID` environment variables to project settings. 
+Set `GOOGLE_APPLICATION_CREDENTIALS` environment variables to your google service account JSON file path.
+Set `WOTT_API_TOKEN` environment variable to your WoTT API token string. 
   
 Now you can run it as follows  
 ```
-python gc-cert-rotate.py
+python cert-rotate.py
 ```  
