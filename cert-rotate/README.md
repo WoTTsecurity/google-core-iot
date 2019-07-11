@@ -1,6 +1,6 @@
 ## Automatic enrolling/updating script
 
-This script is follows this instruction
+This script is a continuation of the instructions given by the link
 
 https://wott.io/blog/tutorials/2019/06/14/google-core-iot 
 
