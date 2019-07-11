@@ -28,7 +28,7 @@ pip install -r requirements.txt
 ```
 
 Set the `PROJECT_ID`, `CLOUD_REGION`, `REGISTRY_ID` environment variables to project settings. 
-Set `GOOGLE_APPLICATION_CREDENTIALS` environment variables to your google service account JSON file path.
+Set `GOOGLE_APPLICATION_CREDENTIALS` environment variable to your google service account JSON file path.
 Set `WOTT_API_TOKEN` environment variable to your WoTT API token string. 
   
 Now you can run it as follows  
