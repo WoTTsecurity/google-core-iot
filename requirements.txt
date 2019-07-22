@@ -1,0 +1,2 @@
+requests==2.20.1
+google-cloud-iot==0.2.0
