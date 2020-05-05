@@ -10,3 +10,4 @@ requests
 pytz==2018.9
 paho-mqtt==1.4.0
 pyjwt==1.7.1
+pylint>=2.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
